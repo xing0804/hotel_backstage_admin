@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lists</title>
+</head>
+<body>
+<h1>index----lists</h1>
+<h2>{$person["name"]}</h2>
+<ul>
+    {volist name="skill" id="item"}
+    <li>{$item}</li>
+    {/volist}
+</ul>
+<ul>
+    {volist name="student" id="item"}
+    <li>{$item["name"]}</li>
+    {/volist}
+</ul>
+
+
+</body>
+</html>
