@@ -5,14 +5,15 @@ use think\Controller;
 use think\Db;
 use think\Request;
 
-class Index extends Controller
-{
+class Orders extends Controller{
     public $code;
+    public $model;
 
     public function __construct(Request $request = null)
     {
         parent::__construct($request);
         $this->code=config('code');
+        $this->model=model('Orders');
     }
     /**
      * 显示资源列表
@@ -22,20 +23,27 @@ class Index extends Controller
     public function index()
     {
         $data=$this->request->get();
-        $htype=$data['htype'];
-        if($htype=="全部"){
-            $htype='%型%';
+        checkUserToken();
+        $uid=$this->request->uid;
+        $where=[];
+        $where['uid']=$uid;
+        if(isset($data['type']) && !empty($data['type'] && !$data['type']==0)){
+            $where['status']=$data['type'];
         }
-        $result=Db::table('hotel_item')->field('hid,hname,hprice,hscore,htype,hprovince,hcity,harea,haddress,himgurl')->where('htype','like',$htype)->select();
-        $hotelItem=$result;
-        if($hotelItem){
+//        $result=$this->model->queryTypeOrders($where);
+        $result=$this->model->queryUnionHotel($where);
+        if($result){
+            return json([
+               'code'=>$this->code['success'],
+                'msg'=>'订单查询成功',
+                'data'=>$result
+            ]);
+        }else{
             return json([
                 'code'=>$this->code['success'],
-                'msg'=>"数据查询成功",
-                'data'=>$hotelItem,
+                'msg'=>'暂无订单信息',
             ]);
         }
-
     }
 
     /**
@@ -56,26 +64,20 @@ class Index extends Controller
      */
     public function save(Request $request)
     {
-        $data=$this->request->post();
-//判断酒店是否已存在
-        $hname=$data['hname'];
-        $isExist=Db::table('hotel_item')->where('hname',$hname)->count();
-        if($isExist){
-            return json([
-                'code'=>$this->code['fail'],
-                'msg'=>"该酒店已经注册过了！"
-            ]);
-        }
-        $result=Db::table('hotel_item')->insert($data);
+        checkUserToken();
+        $uid=$this->request->uid;
+        $info=$this->request->post();
+        $info['uid']=$uid;
+        $result=$this->model->insertorder($info);
         if($result){
             return json([
                 'code'=>$this->code['success'],
-                'msg'=>"数据插入成功！"
+                'msg'=>'订单提交成功',
             ]);
         }else{
             return json([
                 'code'=>$this->code['fail'],
-                'msg'=>"数据插入成功！"
+                'msg'=>'订单插入失败',
             ]);
         }
 
@@ -89,16 +91,6 @@ class Index extends Controller
      */
     public function read($id)
     {
-        //获取酒店信息
-        $hotelInfo=Db::table("hotel_item")->where("hid",$id)->find();
-        if($hotelInfo){
-            return json([
-                'code'=>200,
-                'msg'=>"数据查询成功",
-                'hotelInfo'=>$hotelInfo,
-            ]);
-        }
-
 
     }
 
@@ -135,13 +127,5 @@ class Index extends Controller
     {
         //
     }
-    public function lists(){
-        $student=Db::table("student")->select();
-        $data=['name'=>'张三','age'=>'21'];
-        $skill=["html","css","js","php"];
-        $this->assign("person",$data);
-        $this->assign("skill",$skill);
-        $this->assign("student",$student);
-        return $this->fetch();
-    }
+
 }

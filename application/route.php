@@ -12,6 +12,13 @@
 use think\Route;
 
 Route::resource('api/hotelItem','admin/HotelItem');
+Route::resource('api/index','index/Index');
+Route::resource('api/list','index/Lists');
+Route::resource('api/user','index/User');
+Route::resource('api/login','index/Login');
+Route::resource('api/collection','index/Collection');
+Route::resource('api/room','index/Room');
+Route::resource('api/orders','index/Orders');
 
 return [
     '__pattern__' => [

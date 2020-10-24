@@ -13,7 +13,7 @@
 header("Access-Control-Allow-Origin:*");
 header("Access-Control-Allow-Methods:PUT,POST,GET,DELETE,OPTIONS");
 header("Access-Control-Allow-Headers: Origin, X-Requested-With,Authorization,Content-Type,RetryAfter,retry-after,Accept, token,Retry-after");
-if($_SERVER['REQUEST_METHOD']==='OPTIONS'){
+if($_SERVER['REQUEST_METHOD']==='OPTIONS'){//嗅探请求
     exit();
 }
 // 定义应用目录

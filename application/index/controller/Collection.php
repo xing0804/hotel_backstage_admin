@@ -5,14 +5,14 @@ use think\Controller;
 use think\Db;
 use think\Request;
 
-class Index extends Controller
-{
+class Collection extends Controller{
     public $code;
 
     public function __construct(Request $request = null)
     {
         parent::__construct($request);
         $this->code=config('code');
+
     }
     /**
      * 显示资源列表
@@ -21,19 +21,28 @@ class Index extends Controller
      */
     public function index()
     {
-        $data=$this->request->get();
-        $htype=$data['htype'];
-        if($htype=="全部"){
-            $htype='%型%';
-        }
-        $result=Db::table('hotel_item')->field('hid,hname,hprice,hscore,htype,hprovince,hcity,harea,haddress,himgurl')->where('htype','like',$htype)->select();
-        $hotelItem=$result;
-        if($hotelItem){
-            return json([
-                'code'=>$this->code['success'],
-                'msg'=>"数据查询成功",
-                'data'=>$hotelItem,
-            ]);
+        checkUserToken();
+        $uid=$this->request->uid;
+        $usermodel=model('User');
+        $userresult=$usermodel->queryOne(['uid'=>$uid]);
+        if($userresult){
+            $collection=$userresult['collection'];
+            if($collection){
+                $hotelmodel=model("HotelItem");
+                $result=$hotelmodel->queryHotel($collection);
+                if($result){
+                    return json([
+                        'code'=>$this->code['success'],
+                        'msg'=>'数据查询成功',
+                        'data'=>$result
+                    ]);
+                }else{
+                    return json([
+                        'code'=>$this->code['fail'],
+                        'msg'=>'数据查询失败',
+                    ]);
+                }
+            }
         }
 
     }
@@ -57,25 +66,19 @@ class Index extends Controller
     public function save(Request $request)
     {
         $data=$this->request->post();
-//判断酒店是否已存在
-        $hname=$data['hname'];
-        $isExist=Db::table('hotel_item')->where('hname',$hname)->count();
-        if($isExist){
-            return json([
-                'code'=>$this->code['fail'],
-                'msg'=>"该酒店已经注册过了！"
-            ]);
-        }
-        $result=Db::table('hotel_item')->insert($data);
+        checkUserToken();
+        $uid=$this->request->uid;
+        $hotelmodel=model("User");
+        $result=$hotelmodel->updateCollection($uid,['collection'=>$data['collection']]);
         if($result){
             return json([
                 'code'=>$this->code['success'],
-                'msg'=>"数据插入成功！"
+                'msg'=>'数据更新成功'
             ]);
         }else{
             return json([
                 'code'=>$this->code['fail'],
-                'msg'=>"数据插入成功！"
+                'msg'=>'数据更新失败'
             ]);
         }
 
@@ -89,16 +92,6 @@ class Index extends Controller
      */
     public function read($id)
     {
-        //获取酒店信息
-        $hotelInfo=Db::table("hotel_item")->where("hid",$id)->find();
-        if($hotelInfo){
-            return json([
-                'code'=>200,
-                'msg'=>"数据查询成功",
-                'hotelInfo'=>$hotelInfo,
-            ]);
-        }
-
 
     }
 
@@ -135,13 +128,5 @@ class Index extends Controller
     {
         //
     }
-    public function lists(){
-        $student=Db::table("student")->select();
-        $data=['name'=>'张三','age'=>'21'];
-        $skill=["html","css","js","php"];
-        $this->assign("person",$data);
-        $this->assign("skill",$skill);
-        $this->assign("student",$student);
-        return $this->fetch();
-    }
+
 }
